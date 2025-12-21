@@ -6,22 +6,22 @@ import { userServices } from "./user.service";
 
 const getAllUser = async (req: Request, res: Response) => {
 
-    try {
-        const result = await userServices.getAllUser();
+  try {
+    const result = await userServices.getAllUser();
 
-        res.status(200).json({
-            success: true,
-            message: "Users retrieved successfully",
-            data: result.rows,
-        });
+    res.status(200).json({
+      success: true,
+      message: "Users retrieved successfully",
+      data: result.rows,
+    });
 
-    } catch (error: any) {
-        res.status(500).json({
-            success: false,
-            message: error.message,
-            details: error,
-        });
-    }
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+      details: error,
+    });
+  }
 };
 
 
@@ -73,7 +73,7 @@ const updateUser = async (req: Request, res: Response) => {
 
       return res.status(200).json({
         success: true,
-        message: "User updated",
+        message: "User updated successfully",
         data: result,
       });
     }
@@ -91,25 +91,25 @@ const updateUser = async (req: Request, res: Response) => {
 
 
 
-const deleteUser=async(req:Request,res:Response)=>{
+const deleteUser = async (req: Request, res: Response) => {
 
   try {
-  const result=await userServices.deleteUser(req.params.id!);
-    
-  if(result.rowCount === 0){
-     res.status(404).json({
-      success: false,
-      message: "User not found",
-    })
-  }else{
-    res.status(200).json({
-      success: true,
-      message: "User deleted successfully",
-      data: result.rows,
-    });
-  }
+    const result = await userServices.deleteUser(req.params.id!);
 
-  } catch (error:any) {
+    if (result.rowCount === 0) {
+      res.status(404).json({
+        success: false,
+        message: "User not found",
+      })
+    } else {
+      res.status(200).json({
+        success: true,
+        message: "User deleted successfully",
+        data: result.rows,
+      });
+    }
+
+  } catch (error: any) {
     res.status(500).json({
       success: false,
       message: error.message,
@@ -123,8 +123,8 @@ const deleteUser=async(req:Request,res:Response)=>{
 
 
 export const userController = {
-    getAllUser,
-    updateUser,
-    deleteUser,
+  getAllUser,
+  updateUser,
+  deleteUser,
 
 }

@@ -9,7 +9,7 @@ const router=Router();
 
 router.post("/auth/signup", authControllers.signUp);
 
-router.get("/auth/signin", authControllers.signIn);
+router.post("/auth/signin", authControllers.signIn);
 
 
 

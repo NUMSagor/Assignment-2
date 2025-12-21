@@ -1,4 +1,4 @@
-import { Request,Response } from "express";
+import { Request, Response } from "express";
 import { bookingServices } from "./booking.service";
 import { pool } from "../../config/db";
 
@@ -9,7 +9,7 @@ const createBooking = async (req: Request, res: Response) => {
   try {
     const { customer_id, vehicle_id, rent_start_date, rent_end_date } = req.body;
 
-    
+
     if (!customer_id || !vehicle_id || !rent_start_date || !rent_end_date) {
       return res.status(400).json({
         success: false,
@@ -26,7 +26,7 @@ const createBooking = async (req: Request, res: Response) => {
       });
     }
 
-    
+
     const vehicle = await pool.query(`SELECT id FROM vehicles WHERE id=$1`, [vehicle_id]);
     if (vehicle.rows.length === 0) {
       return res.status(400).json({
@@ -35,7 +35,7 @@ const createBooking = async (req: Request, res: Response) => {
       });
     }
 
-   
+
     const result = await bookingServices.createBooking({
       customer_id,
       vehicle_id,
@@ -60,15 +60,15 @@ const createBooking = async (req: Request, res: Response) => {
 
 const getAllBookings = async (req: Request, res: Response) => {
   try {
-   const result=await bookingServices.getAllBookings(req.user);
+    const result = await bookingServices.getAllBookings(req.user);
 
 
-   res.status(200).json({
-    success: true,
-    message:req.user.role === "admin" ? "All Bookings retrived successfully" : "Your bookings retrieved successfully",
-    data:result,
+    res.status(200).json({
+      success: true,
+      message: req.user.role === "admin" ? "All Bookings retrived successfully" : "Your bookings retrieved successfully",
+      data: result,
 
-   });
+    });
 
   } catch (error: any) {
     res.status(500).json({
@@ -117,10 +117,8 @@ const updateBooking = async (req: Request, res: Response) => {
 
 
 
-
-
-export const bookingControllers={
-    createBooking,
-    getAllBookings,
-    updateBooking
+export const bookingControllers = {
+  createBooking,
+  getAllBookings,
+  updateBooking
 }

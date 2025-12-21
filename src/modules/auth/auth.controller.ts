@@ -27,6 +27,7 @@ const signUp = async (req: Request, res: Response) => {
  const signIn = async (req: Request, res: Response) => {
 
     const { email, password } = req.body;
+    console.log("BODY:", req.body);
 
  try {
     const result = await authServices.signIn(email, password);

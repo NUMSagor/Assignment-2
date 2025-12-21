@@ -3,52 +3,52 @@ import { pool } from "../../config/db";
 
 
 const createBooking = async (payload: Record<string, unknown>) => {
-    const { customer_id, vehicle_id, rent_start_date, rent_end_date } = payload;
+  const { customer_id, vehicle_id, rent_start_date, rent_end_date } = payload;
 
 
-    const availableVehicle = await pool.query(`SELECT daily_rent_price,availability_status FROM vehicles WHERE id=$1`, [vehicle_id]);
+  const availableVehicle = await pool.query(`SELECT daily_rent_price,availability_status FROM vehicles WHERE id=$1`, [vehicle_id]);
 
-    if (availableVehicle.rows.length === 0) {
-        throw new Error("Vehicle not found")
-    };
-
-
-    if (availableVehicle.rows[0].availability_status !== "available") {
-        throw new Error("Vehicle not available");
-    };
+  if (availableVehicle.rows.length === 0) {
+    throw new Error("Vehicle not found")
+  };
 
 
-    const rentDays =
-        Math.ceil((
-            new Date(rent_end_date as string).getTime() -
-            new Date(rent_start_date as string).getTime()
-        ) /
-            (1000 * 60 * 60 * 24))
+  if (availableVehicle.rows[0].availability_status !== "available") {
+    throw new Error("Vehicle not available");
+  };
 
 
-    const totalPrice = rentDays * availableVehicle.rows[0].daily_rent_price;
+  const rentDays =
+    Math.ceil((
+      new Date(rent_end_date as string).getTime() -
+      new Date(rent_start_date as string).getTime()
+    ) /
+      (1000 * 60 * 60 * 24))
+
+
+  const totalPrice = rentDays * availableVehicle.rows[0].daily_rent_price;
 
 
 
-    const result = await pool.query(
-        `
+  const result = await pool.query(
+    `
   INSERT INTO bookings 
     (customer_id, vehicle_id, rent_start_date, rent_end_date, total_price, status)
   VALUES ($1,$2,$3,$4,$5,'active')
   RETURNING id, customer_id, vehicle_id, rent_start_date, rent_end_date, total_price, status
   `,
-        [customer_id, vehicle_id, rent_start_date, rent_end_date, totalPrice]
-    );
+    [customer_id, vehicle_id, rent_start_date, rent_end_date, totalPrice]
+  );
 
-    const vehicleInfo = await pool.query(
-        `SELECT vehicle_name, daily_rent_price FROM vehicles WHERE id = $1`,
-        [vehicle_id]
-    );
+  const vehicleInfo = await pool.query(
+    `SELECT vehicle_name, daily_rent_price FROM vehicles WHERE id = $1`,
+    [vehicle_id]
+  );
 
-    return {
-        ...result.rows[0],
-        vehicle: vehicleInfo.rows[0],
-    };
+  return {
+    ...result.rows[0],
+    vehicle: vehicleInfo.rows[0],
+  };
 
 };
 
@@ -56,7 +56,7 @@ const createBooking = async (payload: Record<string, unknown>) => {
 
 
 const getAllBookings = async (user: any) => {
- 
+
   if (user.role === "admin") {
     const result = await pool.query(`
       SELECT
@@ -83,7 +83,7 @@ const getAllBookings = async (user: any) => {
     return result.rows;
   }
 
-  
+
   const result = await pool.query(`
     SELECT
       b.id,
@@ -107,188 +107,6 @@ const getAllBookings = async (user: any) => {
 
 
 
-// const updateBooking=async(bookingId:string,status: "cancelled" | "returned",user: any)=>{
-
-//     const getBooking=await pool.query( `SELECT * FROM bookings WHERE id = $1`,
-//     [bookingId]);
-
-
-//     if (getBooking.rows.length === 0) {
-//         throw new Error("Booking not found");
-//     };
-
-//     const booking=getBooking.rows[0]
-
-
-//     if(user.role === "customer"){
-//       if (booking.customer_id !== user.id) {
-//       throw new Error("Forbidden");
-//     }
-
-    
-
-
-//     if (status !== "cancelled") {
-//       throw new Error("Invalid status");
-//     }
-
-
-//      if (new Date(booking.rent_start_date) <= new Date()) {
-//       throw new Error("Cannot cancel after rental start");
-//     }
-
-//     const result = await pool.query(
-//       `UPDATE bookings SET status='cancelled' WHERE id=$1 RETURNING *`,
-//       [bookingId]
-//     );
-
-//       await pool.query(
-//       `UPDATE vehicles SET availability_status='available' WHERE id=$1`,
-//       [booking.vehicle_id]
-//     );
-
-//     return result.rows[0];
-
-
-// };
-
-
-// if (user.role === "admin"){
-
-//     if (status !== "returned") {
-//       throw new Error("Invalid status");
-//     }
-
-
-
-//     const result = await pool.query(
-//       `UPDATE bookings SET status ='returned' WHERE id=$1 RETURNING *`,
-//       [bookingId]
-//     );
-
-//     await pool.query(
-//       `UPDATE vehicles SET availability_status ='available' WHERE id=$1`,
-//       [booking.vehicle_id]
-//     );
-
-
-//     return {
-//       ...result.rows[0],
-//       vehicle: { availability_status: "available" },
-//     };
-
-// }
-
-//  throw new Error("Unauthorized");
-
-// }
-
-// const updateBooking = async (
-//   bookingId: string,
-//   status: "cancelled" | "returned",
-//   user: any
-// ) => {
-//   const { rows } = await pool.query(
-//     `SELECT * FROM bookings WHERE id = $1`,
-//     [bookingId]
-//   );
-
-//   if (rows.length === 0) throw new Error("Booking not found");
-
-//   const booking = rows[0];
-
-//   if (user.role === "customer") {
-//     if (booking.customer_id !== user.id) throw new Error("Forbidden");
-
-//     if (status !== "cancelled") throw new Error("Invalid status");
-
-//     if (new Date(booking.rent_start_date) < new Date())
-//       throw new Error("Cannot cancel after rental start");
-
-//   } else if (user.role === "admin") {
-//     if (status !== "returned") throw new Error("Invalid status");
-//   } else {
-//     throw new Error("Unauthorized");
-//   }
-
-//   const result = await pool.query(
-//     `UPDATE bookings SET status = $1 WHERE id = $2 RETURNING *`,
-//     [status, bookingId]
-//   );
-
-//   await pool.query(
-//     `UPDATE vehicles SET availability_status = 'available' WHERE id = $1`,
-//     [booking.vehicle_id]
-//   );
-
-//   return {
-//     booking: result.rows[0],
-//     vehicleStatus: status === "returned" ? "available" : undefined,
-//   };
-// };
-
-
-// const updateBooking = async (
-//   bookingId: string,
-//   status: "cancelled" | "returned",
-//   user: any
-// ) => {
-//   const { rows } = await pool.query(
-//     `SELECT * FROM bookings WHERE id = $1`,
-//     [bookingId]
-//   );
-
-//   if (rows.length === 0) throw new Error("Booking not found");
-
-//   const booking = rows[0];
-
-//   // 👤 CUSTOMER LOGIC
-//   if (user.role === "customer") {
-//     if (booking.customer_id !== user.id) {
-//       throw new Error("Forbidden");
-//     }
-
-//     if (status !== "cancelled") {
-//       throw new Error("Invalid status");
-//     }
-
-//       if (new Date(booking.rent_start_date) < new Date()) {
-//           throw new Error("Cannot cancel after rental start");
-//       }
-
-//   }
-
-//   // 👮 ADMIN LOGIC
-//   else if (user.role === "admin") {
-//     if (status !== "returned") {
-//       throw new Error("Invalid status");
-//     }
-//   }
-
-//   else {
-//     throw new Error("Unauthorized");
-//   }
-
-//   // ✅ Update booking
-//   const result = await pool.query(
-//     `UPDATE bookings SET status = $1 WHERE id = $2 RETURNING *`,
-//     [status, bookingId]
-//   );
-
-//     // 🚗 Update vehicle when booking ends (cancelled OR returned)
-//     if (status === "cancelled" || status === "returned") {
-//         await pool.query(
-//             `UPDATE vehicles SET availability_status = 'available' WHERE id = $1`,
-//             [booking.vehicle_id]
-//         );
-//     }
-
-
-
-//   return result.rows[0];
-// };
-
-
 
 
 type BookingStatus = "cancelled" | "returned";
@@ -298,10 +116,17 @@ const updateBooking = async (
   status: BookingStatus,
   user: any
 ) => {
-  
+
+  const bookingIdNum = Number(bookingId);
+
+  if (isNaN(bookingIdNum)) {
+    throw new Error("Invalid booking ID");
+  }
+
+
   const { rows } = await pool.query(
     `SELECT * FROM bookings WHERE id = $1`,
-    [bookingId]
+    [bookingIdNum]
   );
 
   if (rows.length === 0) {
@@ -310,41 +135,65 @@ const updateBooking = async (
 
   const booking = rows[0];
 
-  
+
+
+  //user
+
+
   if (user.role === "customer") {
-    if (booking.customer_id !== user.id) {
+
+    if (Number(booking.customer_id) !== Number(user.id)) {
       throw new Error("Access forbidden");
     }
+
 
     if (status !== "cancelled") {
       throw new Error("Invalid status");
     }
 
-    if (new Date(booking.rent_start_date) <= new Date()) {
+    const now = Date.now();
+    const rentStartTime = new Date(booking.rent_start_date).getTime();
+
+    if (rentStartTime <= now) {
       throw new Error("Cannot cancel after rental start");
     }
 
+
     const result = await pool.query(
-      `UPDATE bookings SET status='cancelled' WHERE id=$1 RETURNING *`,
-      [bookingId]
+      `UPDATE bookings 
+     SET status = 'cancelled' 
+     WHERE id = $1 
+     RETURNING *`,
+      [bookingIdNum]
+    );
+
+
+    await pool.query(
+      `UPDATE vehicles 
+     SET availability_status = 'available' 
+     WHERE id = $1`,
+      [booking.vehicle_id]
     );
 
     return result.rows[0];
   }
 
- 
+
+
+  //admin
+
   if (user.role === "admin") {
     if (status !== "returned") {
       throw new Error("Invalid status");
     }
 
     const result = await pool.query(
-      `UPDATE bookings SET status='returned' WHERE id=$1 RETURNING *`,
-      [bookingId]
+      `UPDATE bookings SET status = 'returned' WHERE id = $1 RETURNING *`,
+      [bookingIdNum]
     );
 
     await pool.query(
-      `UPDATE vehicles SET availability_status = 'available' WHERE id=$1`,
+      `UPDATE vehicles SET availability_status = 'available' WHERE id = $1`,
       [booking.vehicle_id]
     );
 
@@ -363,9 +212,10 @@ const updateBooking = async (
 
 
 
+
 export const bookingServices = {
-    createBooking,
-    getAllBookings,
-    updateBooking
+  createBooking,
+  getAllBookings,
+  updateBooking
 
 }
